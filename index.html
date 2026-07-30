@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON PONG | Next-Gen Cyberpunk Pong</title>
+    <meta name="description" content="A futuristic, feature-rich Cyberpunk Pong game built with HTML5 Canvas, Web Audio API, power-ups, particle effects, and AI modes.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container" id="appContainer">
+        <!-- Background Ambient Grid -->
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+
+        <!-- Main Header HUD -->
+        <header class="game-header">
+            <div class="logo">
+                <span class="logo-neon">NEON</span><span class="logo-pong">PONG</span>
+                <span class="badge">PRO</span>
+            </div>
+            <div class="hud-stats" id="hudStats" style="display: none;">
+                <div class="score-board">
+                    <div class="player-score-box p1-box">
+                        <span class="player-label" id="p1Name">PLAYER 1</span>
+                        <span class="score" id="p1Score">0</span>
+                    </div>
+                    <div class="score-divider">:</div>
+                    <div class="player-score-box p2-box">
+                        <span class="score" id="p2Score">0</span>
+                        <span class="player-label" id="p2Name">CPU</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="audioToggleBtn" class="icon-btn" title="Toggle Sound">
+                    <span id="audioIcon">🔊</span>
+                </button>
+                <button id="pauseBtn" class="icon-btn" style="display: none;" title="Pause (Esc)">
+                    ⏸️
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Canvas Area -->
+        <main class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="pongCanvas"></canvas>
+
+            <!-- Screen Overlay / Menus -->
+            <div class="overlay-container" id="overlayContainer">
+                
+                <!-- START MENU -->
+                <div class="menu-card active" id="startMenu">
+                    <h1 class="glow-title">NEON PONG</h1>
+                    <p class="subtitle">ENTER THE CYBER ARENA</p>
+
+                    <div class="mode-selection">
+                        <label class="section-label">GAME MODE</label>
+                        <div class="btn-group">
+                            <button class="mode-btn active" data-mode="ai">🤖 1 PLAYER (VS AI)</button>
+                            <button class="mode-btn" data-mode="pvp">⚔️ 2 PLAYERS (LOCAL)</button>
+                        </div>
+                    </div>
+
+                    <div class="difficulty-selection" id="diffSelection">
+                        <label class="section-label">AI DIFFICULTY</label>
+                        <div class="btn-group">
+                            <button class="diff-btn" data-diff="easy">EASY</button>
+                            <button class="diff-btn active" data-diff="medium">MEDIUM</button>
+                            <button class="diff-btn" data-diff="hard">HARD</button>
+                            <button class="diff-btn glow-red" data-diff="insane">CYBER GOD</button>
+                        </div>
+                    </div>
+
+                    <div class="variant-selection">
+                        <label class="section-label">RULES & VARIANT</label>
+                        <div class="btn-group">
+                            <button class="variant-btn active" data-variant="classic">🏓 CLASSIC</button>
+                            <button class="variant-btn" data-variant="powerups">⚡ POWER-UP MAYHEM</button>
+                        </div>
+                    </div>
+
+                    <div class="theme-selection">
+                        <label class="section-label">ARENA THEME</label>
+                        <div class="theme-picker">
+                            <button class="theme-opt active" data-theme="cyber" style="background: linear-gradient(45deg, #00f2fe, #4facfe);"></button>
+                            <button class="theme-opt" data-theme="synthwave" style="background: linear-gradient(45deg, #ff0844, #ffb199);"></button>
+                            <button class="theme-opt" data-theme="matrix" style="background: linear-gradient(45deg, #00ff87, #60efff);"></button>
+                            <button class="theme-opt" data-theme="gold" style="background: linear-gradient(45deg, #f6d365, #fda085);"></button>
+                        </div>
+                    </div>
+
+                    <button class="primary-btn launch-btn" id="startGameBtn">
+                        START MATCH <span class="play-arrow">▶</span>
+                    </button>
+
+                    <div class="controls-guide">
+                        <div class="guide-item"><span>P1:</span> <kbd>W</kbd> / <kbd>S</kbd> or <kbd>Mouse</kbd></div>
+                        <div class="guide-item"><span>P2:</span> <kbd>↑</kbd> / <kbd>↓</kbd></div>
+                        <div class="guide-item"><span>Pause:</span> <kbd>ESC</kbd> or <kbd>P</kbd></div>
+                    </div>
+                </div>
+
+                <!-- PAUSE MENU -->
+                <div class="menu-card hidden" id="pauseMenu">
+                    <h2 class="glow-title">PAUSED</h2>
+                    <div class="menu-buttons">
+                        <button class="primary-btn" id="resumeBtn">RESUME GAME</button>
+                        <button class="secondary-btn" id="restartBtn">RESTART MATCH</button>
+                        <button class="secondary-btn" id="quitBtn">MAIN MENU</button>
+                    </div>
+                </div>
+
+                <!-- GAME OVER MENU -->
+                <div class="menu-card hidden" id="gameOverMenu">
+                    <h2 class="glow-title" id="winnerText">PLAYER 1 WINS!</h2>
+                    <p class="final-score" id="finalScoreText">Final Score: 10 - 7</p>
+
+                    <div class="match-stats">
+                        <div class="stat-item">
+                            <span class="stat-val" id="statMaxRally">0</span>
+                            <span class="stat-lbl">Longest Rally</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-val" id="statSpeed">0 mph</span>
+                            <span class="stat-lbl">Max Ball Speed</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-val" id="statDuration">0s</span>
+                            <span class="stat-lbl">Match Time</span>
+                        </div>
+                    </div>
+
+                    <div class="menu-buttons">
+                        <button class="primary-btn" id="playAgainBtn">PLAY AGAIN</button>
+                        <button class="secondary-btn" id="returnMenuBtn">MAIN MENU</button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Footer / Credits -->
+        <footer class="game-footer">
+            <span>Built with HTML5 & Web Audio API</span>
+            <span class="footer-dot">•</span>
+            <a href="https://github.com/WoSupport/pong-game" target="_blank" class="github-link">GitHub Repository</a>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
